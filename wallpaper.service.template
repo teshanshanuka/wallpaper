@@ -1,0 +1,14 @@
+[Unit]
+Description=Download a wallpaper
+Requires=network-online.target
+After=network-online.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=no
+User=$USER
+Group=$USER
+ExecStart=-$PWD/wallpaper.sh
+
+[Install]
+WantedBy=multi-user.target
