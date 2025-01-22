@@ -28,6 +28,10 @@ def get_image_name(img_elem):
 
 
 def download_image(img_elem, dest: str):
+    if not img_elem:
+        print("No image found")
+        return False
+
     url = img_elem["src"]
     filename = os.path.join(dest, get_image_name(img_elem))
     if os.path.exists(filename):
