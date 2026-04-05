@@ -1,44 +1,35 @@
-import requests
-from bs4 import BeautifulSoup
 import os
-import sys
-import re
 import shutil
+import sys
+
+import requests
+
+HEADERS = {"User-Agent": "wallpaper-dl/1.0"}
 
 
-def load_page(url="https://www.reddit.com/r/wallpapers/"):
-    r = requests.get(url)
-    return r.text
+def find_image(url="https://www.reddit.com/r/wallpapers/.json"):
+    r = requests.get(url, headers=HEADERS)
+    r.raise_for_status()
+    for post in r.json()["data"]["children"]:
+        url = post["data"].get("url", "")
+        if url.startswith("https://i.redd.it/"):
+            return url, post["data"].get("title", "")
+    return None, None
 
 
-def find_image(html):
-    """
-    find all <img> matching src="https://i.redd.it/*.png"
-    """
-    soup = BeautifulSoup(html, "html.parser")
-    return soup.find("img", src=re.compile(r"^https://i.redd.it/.*\.png$"))
-
-
-def get_image_name(img_elem):
-    if name := img_elem.get("alt", ""):
-        name = os.path.basename(name).replace("wallpapers - ", "")
-    else:
-        name = os.path.basename(img_elem["src"])
-    return name + ".png"
-
-
-def download_image(img_elem, dest: str):
-    if not img_elem:
+def download_image(url, title, dest):
+    if not url:
         print("No image found")
         return False
 
-    url = img_elem["src"]
-    filename = os.path.join(dest, get_image_name(img_elem))
+    ext = os.path.splitext(url)[1]
+    name = (title or os.path.basename(url)).replace("/", "_") + ext
+    filename = os.path.join(dest, name)
     if os.path.exists(filename):
         print(f"Image already exists: {filename}")
         return False
 
-    r = requests.get(url, stream=True)
+    r = requests.get(url, headers=HEADERS, stream=True)
     if r.status_code == 200:
         with open(filename, "wb") as f:
             r.raw.decode_content = True
@@ -52,13 +43,9 @@ def download_image(img_elem, dest: str):
 
 if __name__ == "__main__":
     download_dir = sys.argv[1]
-    html = load_page()
-
     download_folder = os.path.expanduser(download_dir)
-    if not os.path.isdir(download_folder):
-        os.makedirs(download_folder)
+    os.makedirs(download_folder, exist_ok=True)
 
-    image = find_image(html)
-    ret = download_image(image, download_folder)
-
+    url, title = find_image()
+    ret = download_image(url, title, download_folder)
     sys.exit(0 if ret else 1)
