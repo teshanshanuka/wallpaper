@@ -6,8 +6,8 @@ Downloads an image from the internet (into `~/Pictures/wallpapers`). And create 
 
 **From inside this folder**
 ```sh
-python -m venv venv
-source ./venv/bin/activate
+python -m venv .venv
+source ./.venv/bin/activate
 pip install -r requirements.txt
 
 mkdir -p ~/.config/systemd/user/
